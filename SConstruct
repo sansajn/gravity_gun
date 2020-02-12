@@ -42,4 +42,9 @@ gl_objs = [
 		'gl/glfw3_window.cpp',
 ])]
 
-env.Program(['test.cpp', gles2_objs, gl_objs])
+phys_camera = env.Object([
+	'phys/Camera.cpp',
+	'phys/vectors.cpp',
+	'phys/matrices.cpp'])
+
+env.Program(['test.cpp', gles2_objs, gl_objs, phys_camera])
