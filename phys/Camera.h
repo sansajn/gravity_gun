@@ -43,6 +43,7 @@ public:
 	void SetWorld(const mat4& view);
 };
 
+//! \param fieldOfView in degrees
 Camera CreatePerspective(float fieldOfView, float aspectRatio, float nearPlane, float farPlane);
 Camera CreateOrthographic(float width, float height, float nearPlane, float farPlane);
 

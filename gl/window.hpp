@@ -7,7 +7,7 @@
 
 namespace ui {
 
-template <template<class> class B, typename L>  // B : behaviour, L : layer
+template <template<class> class B, typename L>  // B : behaviour, L : layer (behaviour implementation)
 class window : public B<L>
 {
 public:

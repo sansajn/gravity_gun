@@ -9,6 +9,7 @@
 #include "gl/colors.hpp"
 #include "gl/shapes.hpp"
 #include "gl/glfw3_window.hpp"
+#include "phys/Camera.h"
 
 static const GLuint WIDTH = 800;
 static const GLuint HEIGHT = 600;
@@ -31,6 +32,7 @@ public:
 
 	scene();
 	void display() override;
+	void update(float dt) override;
 	void input(float dt) override;
 
 private:
@@ -46,6 +48,7 @@ private:
 	vec3 light_pos;
 	gl::camera cam;
 	gles2::shader::program shaded;
+	phys_cookbook::OrbitCamera _eye;
 };
 
 scene::scene()
@@ -72,6 +75,8 @@ scene::scene()
 	cam.position = vec3{2,2,5};
 	cam.look_at(vec3{0,0,0});
 
+	_eye.Perspective(70.0f, WIDTH/(float)HEIGHT, 0.01f, 1000.0f);
+	
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glViewport(0, 0, WIDTH, HEIGHT);
 
@@ -80,7 +85,14 @@ scene::scene()
 
 	shaded.use();
 
-	in().mode(ui::glfw3::user_input::input_mode::camera);
+	//in().mode(ui::glfw3::user_input::input_mode::camera);
+}
+
+void scene::update(float dt)
+{
+	base::update(dt);
+	
+	_eye.Update(dt);
 }
 
 void scene::display()
@@ -93,7 +105,11 @@ void scene::display()
 	glEnable(GL_DEPTH_TEST);
 
 	// cube
-	mat4 VP = cam.view_projection();
+	phys_cookbook::mat4 phys_VP = _eye.GetProjectionMatrix() * _eye.GetViewMatrix();  // TODO: check ordeting
+	phys_VP = phys_cookbook::Transpose(phys_VP);
+	
+	
+// 	mat4 VP = cam.view_projection();
 	mat4 M = mat4{1};
 	shaded.uniform_variable("local_to_screen", VP*M);
 	shaded.uniform_variable("normal_to_world", mat3{inverseTranspose(M)});
