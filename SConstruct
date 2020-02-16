@@ -21,30 +21,19 @@ def create_build_environment():
 	return env
 
 
-env = create_build_environment()
+cpp17 = create_build_environment()
 
-program_objs = env.Object(['gles2/program_gles2.cpp'])
 
-gles2_objs = [
-	program_objs,
-	env.Object([
-		'gles2/mesh_gles2.cpp',
-		'gles2/default_shader_gles2.cpp'
-])]
+glt = cpp17.Object([
+	Glob('libs/glt/*.cpp'),
+	Glob('libs/glt/gles2/*.cpp'),
+	Glob('libs/glt/glfw3/*.cpp')
+])
 
-camera_objs = env.Object(['libs/gl/camera.cpp'])
-
-gl_objs = [
-	camera_objs,
-	env.Object([
-		'gl/window.cpp',
-		'gl/glfw3_user_input.cpp',
-		'gl/glfw3_window.cpp',
-])]
-
-phys_camera = env.Object([
+phys_camera = cpp17.Object([
 	'phys/Camera.cpp',
 	'phys/vectors.cpp',
 	'phys/matrices.cpp'])
 
-env.Program(['test.cpp', gles2_objs, gl_objs, phys_camera])
+cpp17.Program(['test.cpp', glt, phys_camera])
+cpp17.Program(['shapes.cpp', glt, phys_camera])

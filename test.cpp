@@ -2,13 +2,13 @@
 #include <iostream>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/transform.hpp>
-#include "gles2/program_gles2.hpp"
-#include "gles2/mesh_gles2.hpp"
-#include "gles2/default_shader_gles2.hpp"
-#include "gl/camera.hpp"
-#include "gl/colors.hpp"
-#include "gl/shapes.hpp"
-#include "gl/glfw3_window.hpp"
+#include "glt/gles2/program_gles2.hpp"
+#include "glt/gles2/mesh_gles2.hpp"
+#include "glt/gles2/default_shader_gles2.hpp"
+#include "glt/camera.hpp"
+#include "glt/colors.hpp"
+#include "glt/shapes.hpp"
+#include "glt/glfw3/glfw3_window.hpp"
 #include "phys/Camera.h"
 
 static const GLuint WIDTH = 800;
@@ -92,6 +92,14 @@ void scene::update(float dt)
 {
 	base::update(dt);
 	
+	// v = 1/360.0, T chcem aby bolo 5
+
+	static float y_angle = 0.0f;
+	y_angle += 1/5.0f * 360.0f * dt;
+	while (y_angle >= 360.0f)
+		y_angle -= 360.0f;
+
+	_eye.SetRotation(phys_cookbook::vec2{45.0f, y_angle});
 	_eye.Update(dt);
 }
 
@@ -106,8 +114,12 @@ void scene::display()
 
 	// cube
 	phys_cookbook::mat4 phys_VP = _eye.GetProjectionMatrix() * _eye.GetViewMatrix();  // TODO: check ordeting
-	phys_VP = phys_cookbook::Transpose(phys_VP);
-	
+	mat4 VP{
+		phys_VP._11, phys_VP._21, phys_VP._31, phys_VP._41,
+		phys_VP._12, phys_VP._22, phys_VP._32, phys_VP._42,
+		phys_VP._13, phys_VP._23, phys_VP._33, phys_VP._43,
+		phys_VP._14, phys_VP._24, phys_VP._34, phys_VP._44
+	};
 	
 // 	mat4 VP = cam.view_projection();
 	mat4 M = mat4{1};

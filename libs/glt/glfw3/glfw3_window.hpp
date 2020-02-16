@@ -1,7 +1,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include "gl/window.hpp"
-#include "gl/glfw3_user_input.hpp"
+#include "glt/window.hpp"
+#include "glt/glfw3/glfw3_user_input.hpp"
 
 namespace ui {
 

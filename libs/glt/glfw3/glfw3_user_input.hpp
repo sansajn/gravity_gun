@@ -1,7 +1,7 @@
 #pragma once
 #include <glm/vec2.hpp>
 #include <GLFW/glfw3.h>
-#include "gl/window.hpp"
+#include "glt/window.hpp"
 
 namespace ui { namespace glfw3 {
 
