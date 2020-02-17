@@ -1,106 +1,76 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include "glt/gles2/program_gles2.hpp"
 
 static const GLuint WIDTH = 800;
 static const GLuint HEIGHT = 600;
-static const GLchar* vertex_shader_source =
-    "#version 100\n"
-    "attribute vec3 position;\n"
-    "void main() {\n"
-    "   gl_Position = vec4(position, 1.0);\n"
-    "}\n";
-static const GLchar* fragment_shader_source =
-    "#version 100\n"
-    "void main() {\n"
-    "   gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
-    "}\n";
+
+char const * flat_shader_source = R"(
+	#ifdef _VERTEX_
+	uniform mat4 local_to_screen;
+	attribute vec3 position;
+	void main()	{
+		gl_Position = local_to_screen * vec4(position,1);
+	}
+	#endif
+	#ifdef _FRAGMENT_
+	precision mediump float;
+	uniform vec3 color;  // vec3(.7);
+	void main() {
+		gl_FragColor = vec4(color, 1);
+	}
+	#endif
+)";
+
+
 static const GLfloat vertices[] = {
-        0.0f,  0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-    -0.5f, -0.5f, 0.0f,
+	0.0f,  0.5f, 0.0f,
+	0.5f, -0.5f, 0.0f,
+	-0.5f, -0.5f, 0.0f,
 };
 
-GLint common_get_shader_program(const char *vertex_shader_source, const char *fragment_shader_source) {
-    enum Consts {INFOLOG_LEN = 512};
-    GLchar infoLog[INFOLOG_LEN];
-    GLint fragment_shader;
-    GLint shader_program;
-    GLint success;
-    GLint vertex_shader;
+int main(int argc, char * argv[])
+{
+	glfwInit();
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	GLFWwindow * window = glfwCreateWindow(WIDTH, HEIGHT, __FILE__, NULL, NULL);
+	glfwMakeContextCurrent(window);
 
-    /* Vertex shader */
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-    glCompileShader(vertex_shader);
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertex_shader, INFOLOG_LEN, NULL, infoLog);
-        printf("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s\n", infoLog);
-    }
+	printf("GL_VERSION  : %s\n", glGetString(GL_VERSION) );
+	printf("GL_RENDERER : %s\n", glGetString(GL_RENDERER) );
 
-    /* Fragment shader */
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-    glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragment_shader, INFOLOG_LEN, NULL, infoLog);
-        printf("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%s\n", infoLog);
-    }
 
-    /* Link shaders */
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shader_program, INFOLOG_LEN, NULL, infoLog);
-        printf("ERROR::SHADER::PROGRAM::LINKING_FAILED\n%s\n", infoLog);
-    }
+	gles2::shader::program shaded;
+	shaded.from_memory(flat_shader_source, 100);
+	GLint pos_id = shaded.attribute_location("position");
 
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-    return shader_program;
-}
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glViewport(0, 0, WIDTH, HEIGHT);
 
-int main(void) {
-    GLuint shader_program, vbo;
-    GLint pos;
-    GLFWwindow* window;
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(pos_id, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+	glEnableVertexAttribArray(pos_id);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    window = glfwCreateWindow(WIDTH, HEIGHT, __FILE__, NULL, NULL);
-    glfwMakeContextCurrent(window);
+	while (!glfwWindowShouldClose(window))
+	{
+		glfwPollEvents();
+		glClear(GL_COLOR_BUFFER_BIT);
+		shaded.use();
+		shaded.uniform_variable("local_to_screen", glm::mat4{1});
+		shaded.uniform_variable("color", glm::vec3{1,1,1});
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glfwSwapBuffers(window);
+	}
 
-    printf("GL_VERSION  : %s\n", glGetString(GL_VERSION) );
-    printf("GL_RENDERER : %s\n", glGetString(GL_RENDERER) );
-
-    shader_program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
-    pos = glGetAttribLocation(shader_program, "position");
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glViewport(0, 0, WIDTH, HEIGHT);
-
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
-    glEnableVertexAttribArray(pos);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-        glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(shader_program);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glfwSwapBuffers(window);
-    }
-    glDeleteBuffers(1, &vbo);
-    glfwTerminate();
-    return EXIT_SUCCESS;
+	glDeleteBuffers(1, &vbo);
+	glfwTerminate();
+	return EXIT_SUCCESS;
 }
