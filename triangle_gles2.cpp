@@ -43,7 +43,6 @@ int main(int argc, char * argv[])
 	printf("GL_VERSION  : %s\n", glGetString(GL_VERSION) );
 	printf("GL_RENDERER : %s\n", glGetString(GL_RENDERER) );
 
-
 	gles2::shader::program shaded;
 	shaded.from_memory(flat_shader_source, 100);
 	GLint pos_id = shaded.attribute_location("position");
