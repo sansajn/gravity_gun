@@ -37,3 +37,4 @@ phys_camera = cpp17.Object([
 
 cpp17.Program(['test.cpp', glt, phys_camera])
 cpp17.Program(['shapes.cpp', glt, phys_camera])
+cpp17.Program(['shapes_lh.cpp', glt, phys_camera])
